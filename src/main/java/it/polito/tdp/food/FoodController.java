@@ -5,8 +5,11 @@
 package it.polito.tdp.food;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import it.polito.tdp.food.model.Model;
+import it.polito.tdp.food.model.Portion;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -40,7 +43,7 @@ public class FoodController {
     private Button btnCammino; // Value injected by FXMLLoader
 
     @FXML // fx:id="boxPorzioni"
-    private ComboBox<?> boxPorzioni; // Value injected by FXMLLoader
+    private ComboBox<Portion> boxPorzioni; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtResult"
     private TextArea txtResult; // Value injected by FXMLLoader
@@ -48,21 +51,71 @@ public class FoodController {
     @FXML
     void doCammino(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Cerco cammino peso massimo...");
+    	
+    	try {
+    		
+    		int passi = Integer.parseInt(this.txtPassi.getText());	
+    		
+    		List<Portion> res = model.trovaPercorso(this.boxPorzioni.getValue(), passi);
+    		
+    		if (res.size()<=1) {
+    			txtResult.setText("Cammino di " + passi + " passi non trovato.");
+    			return;
+    		}
+    		
+    		this.txtResult.appendText("Cammino massimo da nodo " + this.boxPorzioni.getValue() + "\n");
+    		
+    		for (Portion p:model.trovaPercorso(this.boxPorzioni.getValue(), passi)) 
+    			this.txtResult.appendText(p + "\n");
+    		
+    		this.txtResult.appendText("Peso totale: " + model.pesoMassimo());
+    		
+    		} catch (NullPointerException e) {
+    			txtResult.appendText("Porzione di partenza non selezionata!\n");
+    			return;
+    	} catch (NumberFormatException e) {
+			txtResult.appendText("Errore: il valore inserito non è un intero\n");
+			return;
+	}
     }
 
     @FXML
     void doCorrelate(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Cerco porzioni correlate...");
+
+    	try {
+    		
+    		Map<Integer,Portion> res = model.correlate(boxPorzioni.getValue());
+    		
+    		for (Integer i:res.keySet()) {
+    			this.txtResult.appendText(res.get(i) + " peso: " + i + "\n");
+    		}
+    		
+    		} catch (NullPointerException e) {
+    			txtResult.appendText("Porzione di partenza non selezionata!\n");
+    			return;
+    	}
     	
     }
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	txtResult.clear();
-    	txtResult.appendText("Creazione grafo...");
     	
+    	String annoS = txtCalorie.getText();
+    	try {
+    		int anno = Integer.parseInt(annoS);	
+    		model.creaGrafo(anno);
+    		this.boxPorzioni.getItems().addAll(model.vertici());
+    		
+    		} catch (NumberFormatException e) {
+    			txtResult.appendText("Errore: il valore inserito non è un intero\n");
+    			return;
+    	}
+
+        	
+        this.txtResult.setText("Grafo creato!\nNumero vertici: " + model.vertici().size() +"\nNumero archi: " + model.numeroArchi());
+
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete

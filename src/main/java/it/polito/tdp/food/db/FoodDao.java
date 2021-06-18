@@ -6,6 +6,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import it.polito.tdp.food.model.Adiacenza;
 import it.polito.tdp.food.model.Condiment;
 import it.polito.tdp.food.model.Food;
 import it.polito.tdp.food.model.Portion;
@@ -74,12 +77,16 @@ public class FoodDao {
 		}
 	}
 	
-	public List<Portion> listAllPortions(){
-		String sql = "SELECT * FROM portion" ;
+	public List<Portion> listAllPortionsSelected(int calorie){
+		String sql = "SELECT * "
+				+ "FROM `portion` "
+				+ "WHERE calories < ? "
+				+ "GROUP BY portion_display_name" ;
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
 			PreparedStatement st = conn.prepareStatement(sql) ;
+			st.setInt(1, calorie);
 			
 			List<Portion> list = new ArrayList<>() ;
 			
@@ -97,6 +104,37 @@ public class FoodDao {
 				} catch (Throwable t) {
 					t.printStackTrace();
 				}
+			}
+			
+			conn.close();
+			return list ;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null ;
+		}
+
+	}
+	
+	public List<Adiacenza> getAdiacenze (Map<Integer,Portion> mappa){
+		
+		String sql = "SELECT p1.portion_id AS id1, p2.portion_id AS id2, COUNT(DISTINCT(p1.food_code)) AS peso "
+				+ "FROM `portion` p1, `portion` p2 "
+				+ "WHERE p1.portion_id > p2.portion_id  "
+				+ "GROUP BY p1.portion_display_name, p2.portion_display_name" ;
+		try {
+			Connection conn = DBConnect.getConnection() ;
+
+			PreparedStatement st = conn.prepareStatement(sql) ;
+			
+			List<Adiacenza> list = new ArrayList<>() ;
+			
+			ResultSet res = st.executeQuery() ;
+			
+			while(res.next()) {
+				
+				if (mappa.containsKey(res.getInt("id1")) && mappa.containsKey(res.getInt("id2")))				
+					list.add(new Adiacenza(mappa.get(res.getInt("id1")),mappa.get(res.getInt("id2")),res.getDouble("peso")));
 			}
 			
 			conn.close();
