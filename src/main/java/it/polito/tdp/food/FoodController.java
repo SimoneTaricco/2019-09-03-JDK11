@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import it.polito.tdp.food.model.Model;
 import it.polito.tdp.food.model.Portion;
+import it.polito.tdp.food.model.PortionAndWeight;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -54,27 +55,29 @@ public class FoodController {
     	
     	try {
     		
-    		int passi = Integer.parseInt(this.txtPassi.getText());	
+    		String passiTxt = this.txtPassi.getText();
+    		int passi = Integer.parseInt(passiTxt);	
+    		Portion partenza = this.boxPorzioni.getValue();
     		
-    		List<Portion> res = model.trovaPercorso(this.boxPorzioni.getValue(), passi);
+    		List<Portion> res = model.trovaPercorso(partenza, passi);
     		
     		if (res.size()<=1) {
     			txtResult.setText("Cammino di " + passi + " passi non trovato.");
     			return;
     		}
     		
-    		this.txtResult.appendText("Cammino massimo da nodo " + this.boxPorzioni.getValue() + "\n");
+    		this.txtResult.appendText("Cammino massimo di " + passi + " passi da nodo " + this.boxPorzioni.getValue() + ":\n\n");
     		
     		for (Portion p:model.trovaPercorso(this.boxPorzioni.getValue(), passi)) 
     			this.txtResult.appendText(p + "\n");
     		
-    		this.txtResult.appendText("Peso totale: " + model.pesoMassimo());
+    		this.txtResult.appendText("\nPeso totale: " + model.pesoMassimo());
     		
     		} catch (NullPointerException e) {
-    			txtResult.appendText("Porzione di partenza non selezionata!\n");
+    			txtResult.setText("Porzione di partenza non selezionata!");
     			return;
     	} catch (NumberFormatException e) {
-			txtResult.appendText("Errore: il valore inserito non è un intero\n");
+			txtResult.setText("Errore: il valore inserito non è un intero!");
 			return;
 	}
     }
@@ -85,14 +88,17 @@ public class FoodController {
 
     	try {
     		
-    		Map<Integer,Portion> res = model.correlate(boxPorzioni.getValue());
+    		Portion partenza = boxPorzioni.getValue();
+    		List<PortionAndWeight> res = model.correlate(partenza);
     		
-    		for (Integer i:res.keySet()) {
-    			this.txtResult.appendText(res.get(i) + " peso: " + i + "\n");
+    		this.txtResult.appendText("Porzioni correlate a  " + partenza + ":\n\n");
+    		
+    		for (PortionAndWeight p:res) {
+    			this.txtResult.appendText(p.getPortion() + " | peso: " + p.getWeight() + "\n");
     		}
     		
     		} catch (NullPointerException e) {
-    			txtResult.appendText("Porzione di partenza non selezionata!\n");
+    			txtResult.setText("Porzione di partenza non selezionata!");
     			return;
     	}
     	
@@ -109,7 +115,7 @@ public class FoodController {
     		this.boxPorzioni.getItems().addAll(model.vertici());
     		
     		} catch (NumberFormatException e) {
-    			txtResult.appendText("Errore: il valore inserito non è un intero\n");
+    			txtResult.setText("Errore: il valore inserito non è un intero!");
     			return;
     	}
 

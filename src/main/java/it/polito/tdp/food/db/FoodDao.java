@@ -78,7 +78,7 @@ public class FoodDao {
 	}
 	
 	public List<Portion> listAllPortionsSelected(int calorie){
-		String sql = "SELECT * "
+		String sql = "SELECT DISTINCT * "
 				+ "FROM `portion` "
 				+ "WHERE calories < ? "
 				+ "GROUP BY portion_display_name" ;
@@ -116,16 +116,20 @@ public class FoodDao {
 
 	}
 	
-	public List<Adiacenza> getAdiacenze (Map<Integer,Portion> mappa){
+	public List<Adiacenza> getAdiacenze (Map<String,Portion> mappa, int calorie){
 		
-		String sql = "SELECT p1.portion_id AS id1, p2.portion_id AS id2, COUNT(DISTINCT(p1.food_code)) AS peso "
+		String sql = "SELECT p1.portion_display_name AS id1, p2.portion_display_name AS id2, COUNT(DISTINCT(p1.food_code)) AS peso "
 				+ "FROM `portion` p1, `portion` p2 "
-				+ "WHERE p1.portion_id > p2.portion_id  "
-				+ "GROUP BY p1.portion_display_name, p2.portion_display_name" ;
+				+ "WHERE p1.portion_display_name > p2.portion_display_name "
+				+ "AND p1.food_code = p2.food_code "
+				+ "AND p1.calories < ? AND p2.calories < ? "
+				+ "GROUP BY id1, id2";
 		try {
 			Connection conn = DBConnect.getConnection() ;
 
 			PreparedStatement st = conn.prepareStatement(sql) ;
+			st.setInt(1, calorie);
+			st.setInt(2, calorie);
 			
 			List<Adiacenza> list = new ArrayList<>() ;
 			
@@ -133,8 +137,8 @@ public class FoodDao {
 			
 			while(res.next()) {
 				
-				if (mappa.containsKey(res.getInt("id1")) && mappa.containsKey(res.getInt("id2")))				
-					list.add(new Adiacenza(mappa.get(res.getInt("id1")),mappa.get(res.getInt("id2")),res.getDouble("peso")));
+				if (mappa.containsKey(res.getString("id1")) && mappa.containsKey(res.getString("id2")))				
+					list.add(new Adiacenza(mappa.get(res.getString("id1")),mappa.get(res.getString("id2")),res.getDouble("peso")));
 			}
 			
 			conn.close();
